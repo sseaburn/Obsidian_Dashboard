@@ -5,7 +5,9 @@ A Trello-like board that reads and syncs with your Obsidian Daily Notes.
 ## Quick Start
 
 ```bash
-cd /Users/sseab/ai2026/Obsidian_Dashboard
+git clone https://github.com/sseaburn/Obsidian_Dashboard.git
+cd Obsidian_Dashboard
+cp .env.example .env        # then edit .env with your vault path
 npm install
 npm start
 ```
@@ -22,11 +24,12 @@ Open **http://localhost:3000** in your browser.
 - **Inline editing** – double-click a task to rename it
 - **Add / delete tasks** – changes are written back to the vault immediately
 
-## Vault Configuration
+## Configuration
 
-The server reads from:
-```
-~/Documents/Scott Vault/Daily Note/
+Copy `.env.example` to `.env` and set your vault path:
+
+```bash
+cp .env.example .env
 ```
 
-To change this, edit `VAULT_PATH` in `server/index.js`.
+Then edit `.env` to point `VAULT_PATH` at your Obsidian daily notes folder.
