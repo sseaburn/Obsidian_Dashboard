@@ -81,19 +81,24 @@ All configuration lives in a single file: `.env.example` (or `.env` if you've cr
 
 ### Changing Ports
 
-If you have port conflicts (common when running multiple projects), edit `API_PORT` and `PORT` in your config file:
+If you have port conflicts (common when running multiple projects), create a `.env` file with your preferred ports:
+
+```bash
+cp .env.example .env
+```
+
+Then edit `.env`:
 
 ```
 API_PORT=3007
 PORT=3008
 ```
 
-Then restart the app. Both the backend server and the React dev proxy read from the same config file — no other files need to change.
+Restart the app and both the backend server and the React dev proxy will use the new ports.
 
 **If you see "Something is already running on port XXXX"**, kill the process using that port first:
 
 ```bash
-# Find and kill whatever is on port 3000 (or whichever port conflicts)
 lsof -ti :3000 | xargs kill -9
 ```
 
@@ -105,9 +110,7 @@ The app runs two processes simultaneously:
 
 2. **React dev server** — runs on `PORT` (default 3000). This serves the frontend and proxies all `/api` requests to the Express server automatically.
 
-The proxy is handled by `src/setupProxy.js`, which reads `API_PORT` from your config so the frontend always knows where the backend is. You never need to edit this file — just change the port in your `.env` or `.env.example` and everything stays in sync.
-
-The startup script (`start.js`) loads your config first, then launches both processes with the correct environment variables.
+The proxy is handled by `src/setupProxy.js`, which reads `API_PORT` from your config so the frontend always knows where the backend is. You never need to edit this file — just change the port in your `.env` and everything stays in sync.
 
 ### Daily Note Format
 
@@ -155,7 +158,6 @@ Obsidian_Dashboard/
 │   ├── setupProxy.js          # Dev proxy — routes /api to Express server
 │   ├── index.js               # React entry point
 │   └── index.css              # Global styles and CSS variables
-├── start.js                   # Startup script — loads config, launches both servers
 ├── .env.example               # Default configuration (works out of the box)
 ├── .gitignore
 ├── package.json
