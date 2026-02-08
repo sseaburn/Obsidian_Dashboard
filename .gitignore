@@ -17,6 +17,9 @@ Thumbs.db
 *.swp
 *.swo
 
+# Planning / personal notes
+brainstorming.md
+
 # Logs
 npm-debug.log*
 yarn-debug.log*

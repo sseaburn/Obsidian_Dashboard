@@ -157,30 +157,50 @@ function App() {
     updateDay(dateStr, tasks);
   };
 
-  // ── Drag and drop between days ────────────────────────────────────────────
+  // ── Drag and drop (between days + reorder within a day) ─────────────────
 
   const handleDragStart = (dateStr, taskIndex) => {
     setDragState({ fromDate: dateStr, taskIndex });
   };
 
-  const handleDrop = (toDate) => {
+  const handleDrop = (toDate, toIndex) => {
     if (!dragState) return;
     const { fromDate, taskIndex } = dragState;
+
+    // Reorder within the same day
     if (fromDate === toDate) {
+      if (toIndex === undefined || toIndex === taskIndex) {
+        setDragState(null);
+        return;
+      }
+      const day = weekData.days.find((d) => d.date === fromDate);
+      if (!day) return;
+      const tasks = [...day.tasks];
+      const [moved] = tasks.splice(taskIndex, 1);
+      const insertAt = toIndex > taskIndex ? toIndex - 1 : toIndex;
+      tasks.splice(insertAt, 0, moved);
+      updateDay(fromDate, tasks);
       setDragState(null);
       return;
     }
 
+    // Move between days
     const fromDay = weekData.days.find((d) => d.date === fromDate);
     const toDay = weekData.days.find((d) => d.date === toDate);
     if (!fromDay) return;
 
     const task = fromDay.tasks[taskIndex];
     const fromTasks = fromDay.tasks.filter((_, i) => i !== taskIndex);
-    const toTasks = [...(toDay?.tasks || []), task];
+    const toTasks = [...(toDay?.tasks || [])];
+    const insertAt = toIndex !== undefined ? toIndex : toTasks.length;
+    toTasks.splice(insertAt, 0, task);
 
     updateDay(fromDate, fromTasks);
     updateDay(toDate, toTasks);
+    setDragState(null);
+  };
+
+  const handleDragEnd = () => {
     setDragState(null);
   };
 
@@ -239,8 +259,9 @@ function App() {
             onDelete={(i) => deleteTask(day.date, i)}
             onEdit={(i, text) => editTask(day.date, i, text)}
             onDragStart={(i) => handleDragStart(day.date, i)}
-            onDrop={() => handleDrop(day.date)}
-            isDragTarget={dragState && dragState.fromDate !== day.date}
+            onDrop={(toIndex) => handleDrop(day.date, toIndex)}
+            onDragEnd={handleDragEnd}
+            dragState={dragState}
           />
         ))}
       </div>
@@ -250,11 +271,14 @@ function App() {
 
 // ── Day Column ───────────────────────────────────────────────────────────────
 
-function DayColumn({ day, isToday: today, onToggle, onAdd, onDelete, onEdit, onDragStart, onDrop, isDragTarget }) {
+function DayColumn({ day, isToday: today, onToggle, onAdd, onDelete, onEdit, onDragStart, onDrop, onDragEnd, dragState }) {
   const [newTask, setNewTask] = useState('');
   const [adding, setAdding] = useState(false);
+  const [dropIndex, setDropIndex] = useState(null);
   const inputRef = useRef(null);
-  const [dragOver, setDragOver] = useState(false);
+
+  const isDragging = dragState !== null;
+  const isDragFromThis = dragState && dragState.fromDate === day.date;
 
   useEffect(() => {
     if (adding && inputRef.current) inputRef.current.focus();
@@ -269,15 +293,39 @@ function DayColumn({ day, isToday: today, onToggle, onAdd, onDelete, onEdit, onD
     setAdding(false);
   };
 
+  const getDropIndex = (e, cardIndex) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const midY = rect.top + rect.height / 2;
+    return e.clientY < midY ? cardIndex : cardIndex + 1;
+  };
+
   const completedCount = day.tasks.filter((t) => t.completed).length;
   const totalCount = day.tasks.length;
 
   return (
     <div
-      className={`column ${today ? 'column-today' : ''} ${dragOver ? 'column-dragover' : ''}`}
-      onDragOver={(e) => { e.preventDefault(); if (isDragTarget) setDragOver(true); }}
-      onDragLeave={() => setDragOver(false)}
-      onDrop={(e) => { e.preventDefault(); setDragOver(false); onDrop(); }}
+      className={`column ${today ? 'column-today' : ''} ${isDragging && dropIndex !== null ? 'column-dragover' : ''}`}
+      onDragOver={(e) => {
+        e.preventDefault();
+        // If dragging over the empty area below cards, set drop index to end
+        if (isDragging && e.target.closest('.column-body') && !e.target.closest('.task-card')) {
+          setDropIndex(day.tasks.length);
+        }
+      }}
+      onDragLeave={(e) => {
+        if (!e.currentTarget.contains(e.relatedTarget)) {
+          setDropIndex(null);
+        }
+      }}
+      onDrop={(e) => {
+        e.preventDefault();
+        onDrop(dropIndex !== null ? dropIndex : day.tasks.length);
+        setDropIndex(null);
+      }}
+      onDragEnd={() => {
+        setDropIndex(null);
+        onDragEnd();
+      }}
     >
       <div className="column-header">
         <div className="column-date-row">
@@ -302,18 +350,33 @@ function DayColumn({ day, isToday: today, onToggle, onAdd, onDelete, onEdit, onD
 
       <div className="column-body">
         {day.tasks.map((task, i) => (
-          <TaskCard
-            key={`${day.date}-${i}-${task.text}`}
-            task={task}
-            index={i}
-            onToggle={() => onToggle(i)}
-            onDelete={() => onDelete(i)}
-            onEdit={(text) => onEdit(i, text)}
-            onDragStart={() => onDragStart(i)}
-          />
+          <React.Fragment key={`${day.date}-${i}-${task.text}`}>
+            {dropIndex === i && (
+              <div className="drop-indicator" />
+            )}
+            <TaskCard
+              task={task}
+              index={i}
+              onToggle={() => onToggle(i)}
+              onDelete={() => onDelete(i)}
+              onEdit={(text) => onEdit(i, text)}
+              onDragStart={() => onDragStart(i)}
+              onDragOver={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (isDragging) {
+                  setDropIndex(getDropIndex(e, i));
+                }
+              }}
+              isDragSource={isDragFromThis && dragState.taskIndex === i}
+            />
+          </React.Fragment>
         ))}
+        {dropIndex === day.tasks.length && (
+          <div className="drop-indicator" />
+        )}
 
-        {day.tasks.length === 0 && !adding && (
+        {day.tasks.length === 0 && !adding && dropIndex === null && (
           <div className="empty-state">
             <span className="empty-icon">○</span>
             <span>No tasks</span>
@@ -343,7 +406,7 @@ function DayColumn({ day, isToday: today, onToggle, onAdd, onDelete, onEdit, onD
 
 // ── Task Card ────────────────────────────────────────────────────────────────
 
-function TaskCard({ task, index, onToggle, onDelete, onEdit, onDragStart }) {
+function TaskCard({ task, index, onToggle, onDelete, onEdit, onDragStart, onDragOver, isDragSource }) {
   const [editing, setEditing] = useState(false);
   const [editText, setEditText] = useState(task.text);
   const inputRef = useRef(null);
@@ -364,12 +427,13 @@ function TaskCard({ task, index, onToggle, onDelete, onEdit, onDragStart }) {
 
   return (
     <div
-      className={`task-card ${task.completed ? 'task-completed' : ''}`}
+      className={`task-card ${task.completed ? 'task-completed' : ''} ${isDragSource ? 'task-dragging' : ''}`}
       draggable
       onDragStart={(e) => {
         e.dataTransfer.effectAllowed = 'move';
         onDragStart();
       }}
+      onDragOver={onDragOver}
     >
       <button
         className={`checkbox ${task.completed ? 'checkbox-checked' : ''}`}

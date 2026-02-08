@@ -264,6 +264,12 @@
   transform: scale(0.98);
 }
 
+.task-dragging {
+  opacity: 0.3;
+  border: 1px dashed var(--border);
+  background: var(--surface);
+}
+
 .task-completed {
   opacity: 0.5;
 }
@@ -379,6 +385,22 @@
   cursor: grab;
   font-size: 14px;
   letter-spacing: -1px;
+}
+
+/* ── Drop Indicator ───────────────────────────────────────────────────────── */
+
+.drop-indicator {
+  height: 3px;
+  background: var(--accent);
+  border-radius: 2px;
+  margin: -1px 4px;
+  box-shadow: 0 0 8px var(--accent-glow);
+  animation: drop-glow 0.8s ease-in-out infinite alternate;
+}
+
+@keyframes drop-glow {
+  from { box-shadow: 0 0 6px var(--accent-glow); }
+  to { box-shadow: 0 0 14px var(--accent-glow); }
 }
 
 /* ── Add Task ─────────────────────────────────────────────────────────────── */
