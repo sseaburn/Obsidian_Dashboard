@@ -9,13 +9,8 @@ const chokidar = require('chokidar');
 const app = express();
 const PORT = process.env.API_PORT || 3001;
 
-// Vault path from .env — see .env.example for setup
-const VAULT_PATH = process.env.VAULT_PATH || path.join(
-  process.env.HOME || process.env.USERPROFILE,
-  'Documents',
-  'Obsidian Vault',
-  'Daily Notes'
-);
+// Vault path from .env — defaults to bundled mock-vault for demo
+const VAULT_PATH = process.env.VAULT_PATH || path.join(__dirname, '..', 'mock-vault', 'Daily Note');
 
 app.use(cors());
 app.use(express.json());
