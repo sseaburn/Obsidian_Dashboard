@@ -1,8 +1,11 @@
 const { createProxyMiddleware } = require('http-proxy-middleware');
 const path = require('path');
+const fs = require('fs');
 
-// Load .env so the proxy picks up API_PORT
-require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
+// Load .env if it exists, otherwise fall back to .env.example
+const ROOT = path.join(__dirname, '..');
+const envFile = fs.existsSync(path.join(ROOT, '.env')) ? '.env' : '.env.example';
+require('dotenv').config({ path: path.join(ROOT, envFile) });
 
 const API_PORT = process.env.API_PORT || 3001;
 

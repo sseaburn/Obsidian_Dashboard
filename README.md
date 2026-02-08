@@ -51,21 +51,32 @@ That's it. The app launches with the bundled demo data and opens at **http://loc
 
 ## Connecting Your Obsidian Vault
 
-To use your own vault instead of the demo data:
+To use your own vault instead of the demo data, open `.env.example` and change `VAULT_PATH` to the absolute path of your daily notes folder:
 
-1. Copy the example config:
-   ```bash
-   cp .env.example .env
-   ```
+```
+VAULT_PATH=/Users/yourname/Documents/My Vault/Daily Notes
+```
 
-2. Open `.env` and set `VAULT_PATH` to the absolute path of your Obsidian daily notes folder:
-   ```
-   VAULT_PATH=/Users/yourname/Documents/My Vault/Daily Notes
-   ```
+Then restart the app (`Ctrl+C`, then `npm start`).
 
-3. Restart the app (`Ctrl+C`, then `npm start`).
+The app reads `.env` if it exists, otherwise falls back to `.env.example`. If you'd prefer to keep your personal config out of version control, copy the file first:
 
-The app expects markdown files named `YYYY-MM-DD.md` inside that folder. Without a `.env` file, the server falls back to the bundled `mock-vault/` directory.
+```bash
+cp .env.example .env
+```
+
+The app expects markdown files named `YYYY-MM-DD.md` inside the configured folder.
+
+### Changing Ports
+
+If you have port conflicts, edit `API_PORT` and `PORT` in `.env.example` (or `.env`):
+
+```
+API_PORT=3007
+PORT=3008
+```
+
+Both the backend server and the React dev proxy read from the same config — no other files need to change.
 
 ### Configuration Reference
 

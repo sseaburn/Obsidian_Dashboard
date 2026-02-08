@@ -1,16 +1,23 @@
-require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') });
+const path = require('path');
+const fs = require('fs');
+const ROOT = path.join(__dirname, '..');
+
+// Load .env if it exists, otherwise fall back to .env.example
+const envFile = fs.existsSync(path.join(ROOT, '.env')) ? '.env' : '.env.example';
+require('dotenv').config({ path: path.join(ROOT, envFile) });
 
 const express = require('express');
 const cors = require('cors');
-const fs = require('fs');
-const path = require('path');
 const chokidar = require('chokidar');
 
 const app = express();
 const PORT = process.env.API_PORT || 3001;
 
-// Vault path from .env — defaults to bundled mock-vault for demo
-const VAULT_PATH = process.env.VAULT_PATH || path.join(__dirname, '..', 'mock-vault', 'Daily Note');
+// Resolve vault path (supports both relative and absolute paths)
+const rawVaultPath = process.env.VAULT_PATH || './mock-vault/Daily Note';
+const VAULT_PATH = path.isAbsolute(rawVaultPath)
+  ? rawVaultPath
+  : path.resolve(ROOT, rawVaultPath);
 
 app.use(cors());
 app.use(express.json());
