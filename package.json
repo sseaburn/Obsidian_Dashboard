@@ -9,7 +9,6 @@
     "client": "react-scripts start",
     "build": "react-scripts build"
   },
-  "proxy": "http://localhost:3001",
   "dependencies": {
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
