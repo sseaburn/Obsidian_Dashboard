@@ -4,7 +4,7 @@
   "private": true,
   "description": "Trello-like Kanban board for Obsidian Daily Notes",
   "scripts": {
-    "start": "concurrently \"npm run server\" \"npm run client\"",
+    "start": "node start.js",
     "server": "node server/index.js",
     "client": "react-scripts start",
     "build": "react-scripts build"
