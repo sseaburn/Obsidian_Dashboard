@@ -108,6 +108,27 @@
   50% { opacity: 0.4; }
 }
 
+.theme-toggle {
+  background: var(--card);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+  margin-left: 4px;
+}
+
+.theme-toggle:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: var(--accent-glow);
+}
+
 /* ── Board ────────────────────────────────────────────────────────────────── */
 
 .board {

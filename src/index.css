@@ -8,6 +8,13 @@
 }
 
 :root {
+  --radius: 12px;
+  --radius-sm: 8px;
+  --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* ── Dark theme (default) ─────────────────────────────────────────────────── */
+[data-theme="dark"] {
   --bg: #0f0f13;
   --surface: #1a1a24;
   --surface-hover: #22222f;
@@ -24,10 +31,28 @@
   --red-soft: rgba(248, 113, 113, 0.12);
   --today: #7c5bf5;
   --today-glow: rgba(124, 91, 245, 0.15);
-  --radius: 12px;
-  --radius-sm: 8px;
   --shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
-  --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* ── Light theme ──────────────────────────────────────────────────────────── */
+[data-theme="light"] {
+  --bg: #f4f4f8;
+  --surface: #ffffff;
+  --surface-hover: #f0f0f5;
+  --card: #f7f7fb;
+  --card-hover: #eeeef5;
+  --border: #dddde8;
+  --text: #1a1a2e;
+  --text-muted: #6e6e8a;
+  --accent: #6d4de6;
+  --accent-glow: rgba(109, 77, 230, 0.15);
+  --green: #16a368;
+  --green-soft: rgba(22, 163, 104, 0.1);
+  --red: #dc3545;
+  --red-soft: rgba(220, 53, 69, 0.08);
+  --today: #6d4de6;
+  --today-glow: rgba(109, 77, 230, 0.1);
+  --shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
 }
 
 body {
