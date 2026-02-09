@@ -166,6 +166,27 @@ function App() {
     updateDay(dateStr, tasks);
   };
 
+  // ── Reorder / move (touch-friendly) ────────────────────────────────────
+
+  const reorderTask = (dateStr, fromIndex, toIndex) => {
+    const day = weekData.days.find((d) => d.date === dateStr);
+    if (!day || fromIndex === toIndex) return;
+    if (toIndex < 0 || toIndex >= day.tasks.length) return;
+    const tasks = [...day.tasks];
+    const [moved] = tasks.splice(fromIndex, 1);
+    tasks.splice(toIndex, 0, moved);
+    updateDay(dateStr, tasks);
+  };
+
+  const moveTaskToDay = (fromDate, taskIndex, toDate) => {
+    const fromDay = weekData.days.find((d) => d.date === fromDate);
+    const toDay = weekData.days.find((d) => d.date === toDate);
+    if (!fromDay || fromDate === toDate) return;
+    const task = fromDay.tasks[taskIndex];
+    updateDay(fromDate, fromDay.tasks.filter((_, i) => i !== taskIndex));
+    updateDay(toDate, [...(toDay?.tasks || []), task]);
+  };
+
   // ── Drag and drop (between days + reorder within a day) ─────────────────
 
   const handleDragStart = (dateStr, taskIndex) => {
@@ -282,6 +303,9 @@ function App() {
             onDrop={(toIndex) => handleDrop(day.date, toIndex)}
             onDragEnd={handleDragEnd}
             dragState={dragState}
+            onReorder={(fromIndex, toIndex) => reorderTask(day.date, fromIndex, toIndex)}
+            onMoveToDay={(taskIndex, toDate) => moveTaskToDay(day.date, taskIndex, toDate)}
+            weekDates={weekData?.dates || []}
           />
         ))}
       </div>
@@ -291,7 +315,7 @@ function App() {
 
 // ── Day Column ───────────────────────────────────────────────────────────────
 
-function DayColumn({ day, isToday: today, onToggle, onAdd, onDelete, onEdit, onDragStart, onDrop, onDragEnd, dragState }) {
+function DayColumn({ day, isToday: today, onToggle, onAdd, onDelete, onEdit, onDragStart, onDrop, onDragEnd, dragState, onReorder, onMoveToDay, weekDates }) {
   const [newTask, setNewTask] = useState('');
   const [adding, setAdding] = useState(false);
   const [dropIndex, setDropIndex] = useState(null);
@@ -377,6 +401,7 @@ function DayColumn({ day, isToday: today, onToggle, onAdd, onDelete, onEdit, onD
             <TaskCard
               task={task}
               index={i}
+              totalTasks={day.tasks.length}
               onToggle={() => onToggle(i)}
               onDelete={() => onDelete(i)}
               onEdit={(text) => onEdit(i, text)}
@@ -389,6 +414,11 @@ function DayColumn({ day, isToday: today, onToggle, onAdd, onDelete, onEdit, onD
                 }
               }}
               isDragSource={isDragFromThis && dragState.taskIndex === i}
+              onMoveUp={() => onReorder(i, i - 1)}
+              onMoveDown={() => onReorder(i, i + 1)}
+              onMoveToDay={(toDate) => onMoveToDay(i, toDate)}
+              weekDates={weekDates}
+              currentDate={day.date}
             />
           </React.Fragment>
         ))}
@@ -426,9 +456,10 @@ function DayColumn({ day, isToday: today, onToggle, onAdd, onDelete, onEdit, onD
 
 // ── Task Card ────────────────────────────────────────────────────────────────
 
-function TaskCard({ task, index, onToggle, onDelete, onEdit, onDragStart, onDragOver, isDragSource }) {
+function TaskCard({ task, index, totalTasks, onToggle, onDelete, onEdit, onDragStart, onDragOver, isDragSource, onMoveUp, onMoveDown, onMoveToDay, weekDates, currentDate }) {
   const [editing, setEditing] = useState(false);
   const [editText, setEditText] = useState(task.text);
+  const [showMoveMenu, setShowMoveMenu] = useState(false);
   const inputRef = useRef(null);
 
   useEffect(() => {
@@ -486,20 +517,61 @@ function TaskCard({ task, index, onToggle, onDelete, onEdit, onDragStart, onDrag
             setEditText(task.text);
             setEditing(true);
           }}
+          onClick={(e) => {
+            // Tap to edit on touch devices
+            if ('ontouchstart' in window) {
+              setEditText(task.text);
+              setEditing(true);
+            }
+          }}
           title="Double-click to edit"
         >
           {task.text}
         </span>
       )}
 
-      <div className="task-actions">
-        <button className="task-action-btn drag-handle" title="Drag to move">
-          ⠿
-        </button>
-        <button className="task-action-btn delete-btn" onClick={onDelete} title="Delete task">
-          ×
-        </button>
+      {/* Desktop: drag handle + delete (shown on hover) */}
+      <div className="task-actions desktop-only">
+        <button className="task-action-btn drag-handle" title="Drag to move">⠿</button>
+        <button className="task-action-btn delete-btn" onClick={onDelete} title="Delete task">×</button>
       </div>
+
+      {/* Mobile: reorder + move + delete (always visible on touch) */}
+      <div className="task-actions-mobile touch-only">
+        <button
+          className="task-action-btn"
+          onClick={onMoveUp}
+          disabled={index === 0}
+          title="Move up"
+        >↑</button>
+        <button
+          className="task-action-btn"
+          onClick={onMoveDown}
+          disabled={index >= totalTasks - 1}
+          title="Move down"
+        >↓</button>
+        <button
+          className="task-action-btn move-btn"
+          onClick={() => setShowMoveMenu(!showMoveMenu)}
+          title="Move to another day"
+        >→</button>
+        <button className="task-action-btn delete-btn" onClick={onDelete} title="Delete task">×</button>
+      </div>
+
+      {/* Day picker popup */}
+      {showMoveMenu && (
+        <div className="move-menu">
+          {weekDates.filter((d) => d !== currentDate).map((d) => (
+            <button
+              key={d}
+              className="move-menu-item"
+              onClick={() => { onMoveToDay(d); setShowMoveMenu(false); }}
+            >
+              {DAY_SHORT[parseDate(d).getDay()]} {parseDate(d).getDate()}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
